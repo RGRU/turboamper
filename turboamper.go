@@ -4,25 +4,25 @@
 package turboamper
 
 // FbToAMP convertes given facebook embeddable html to AMP
-func FBtoAMP(htmlText []byte) ([]byte, error) {
-    converted := make([]byte, 0, len(htmlText))
-    return converted, nil
+func FBToAMP(htmlText []byte) ([]byte, error) {
+	converted := make([]byte, 0, len(htmlText))
+	return converted, nil
 }
 
 // VkToAMP convertes given vkontakte embeddable html to AMP
-func VKtoAMP(htmlText []byte) ([]byte, error) {
-    converted := make([]byte, 0, len(htmlText))
-    return converted, nil
+func VKToAMP(htmlText []byte) ([]byte, error) {
+	converted := make([]byte, 0, len(htmlText))
+	return converted, nil
 }
 
 // InstaToAMP convertes given instagram embeddable html to AMP
 func InstaToAMP(htmlText []byte) ([]byte, error) {
-    converted := make([]byte, 0, len(htmlText))
-    return converted, nil
+	converted := make([]byte, 0, len(htmlText))
+	return converted, nil
 }
 
 // TwitToAMP convertes given instagram embeddable html to AMP
 func TwitToAMP(htmlText []byte) ([]byte, error) {
-    converted := make([]byte, 0, len(htmlText))
-    return converted, nil
+	converted := make([]byte, 0, len(htmlText))
+	return converted, nil
 }
