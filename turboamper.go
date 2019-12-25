@@ -23,10 +23,10 @@ type VkPost struct {
 func (vkpost *VkPost) printAMP() []byte {
 	attributes := ""
 	if vkpost.Width > 0 {
-		attributes +=  fmt.Sprintf(` width="%d"`, vkpost.Width)
+		attributes += fmt.Sprintf(` width="%d"`, vkpost.Width)
 	}
 	if vkpost.Height > 0 {
-		attributes +=  fmt.Sprintf(` height="%d"`, vkpost.Height)
+		attributes += fmt.Sprintf(` height="%d"`, vkpost.Height)
 	}
 	template := `<amp-vk%s data-embedtype="post" layout="responsive" data-owner-id="%d" data-post-id="%d" data-hash="%s"></amp-vk>`
 
@@ -49,8 +49,11 @@ func VkToAMP(htmlText []byte) ([]byte, error) {
 		return nil, fmt.Errorf("given string is not a VK widget post")
 	}
 
-	re := regexp.MustCompile(`VK.Widgets.Post\("vk_post_(.+?)_(.+?)", (-?\d+?), (-?\d+?), '(\S+?)'`)
+	re := regexp.MustCompile(`VK.Widgets.Post\("vk_post_(-?\d+)_(-?\d+)", (-?\d+), (-?\d+), '(\S+?)'`)
 	widgetParsed := re.FindSubmatch(htmlText)
+	if widgetParsed == nil {
+		return nil, fmt.Errorf("cannot parse vk widget")
+	}
 
 	// 1st and 3rd, 2nd and 4th should match
 	if string(widgetParsed[1]) != string(widgetParsed[3]) || string(widgetParsed[2]) != string(widgetParsed[4]) {
@@ -68,6 +71,21 @@ func VkToAMP(htmlText []byte) ([]byte, error) {
 	}
 
 	data := &VkPost{OwnerId: ownerId, PostId: postId, Hash: string(widgetParsed[5])}
+
+	// let's extract width
+	whRe := regexp.MustCompile(`VK.Widgets.Post\(.+?{width: (\d+)(?:, height: (\d+))?}\)`)
+	widthHeight := whRe.FindSubmatch(htmlText)
+	if widthHeight != nil {
+		w, err := strconv.ParseInt(string(widthHeight[1]), 10, 0)
+		if err == nil {
+			data.Width = w
+		}
+
+		h, err := strconv.ParseInt(string(widthHeight[2]), 10, 0)
+		if err == nil {
+			data.Height = h
+		}
+	}
 
 	return data.printAMP(), nil
 }
