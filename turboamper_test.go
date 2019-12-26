@@ -1,6 +1,9 @@
 package turboamper
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestVkToAMPTable(t *testing.T) {
 	var tests = []struct {
@@ -55,4 +58,19 @@ func TestVkToAMPWrong(t *testing.T) {
 	if got, err := VkToAMP([]byte(html)); err == nil {
 		t.Errorf("VkToAMP() = %q; want err, got result", got)
 	}
+}
+
+func ExampleVkToAMP() {
+	html := `<div id="vk_post_-165546713_21078"></div>
+<script type="text/javascript" src="https://vk.com/js/api/openapi.js?162"></script>
+<script type="text/javascript">
+  (function() {
+    VK.Widgets.Post( "vk_post_-165546713_21078", -165546713, 21078, 'UDKmSYMw9-_LHr7Lcgz8oAVE3Xg', {width: 600});
+  }());
+</script>`
+	amp, err := VkToAMP([]byte(html))
+	if err != nil {
+		fmt.Printf("ERROR: %s", err)
+	}
+	fmt.Printf("AMPfied: %s", amp)
 }
