@@ -18,6 +18,11 @@ func TestFBToAMPTable(t *testing.T) {
 			`<iframe src="https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Fnasaearth%2Fvideos%2F456540998570328%2F&show_text=0&width=560" width="560" height="373" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowTransparency="true" allowFullScreen="true"></iframe>`,
 			`<amp-facebook layout="responsive" width="560" height="373" data-embed-as="video" data-href="https://www.facebook.com/nasaearth/videos/456540998570328/"></amp-facebook>`,
 		},
+		{
+			`<iframe src="https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Fbarsuksergey%2Fvideos%2F2720743767989363%2F&show_text=0&width=560" width="560" height="308" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowTransparency="true" allowFullScreen="true"></iframe>
+`,
+			`<amp-facebook layout="responsive" width="560" height="308" data-embed-as="video" data-href="https://www.facebook.com/barsuksergey/videos/2720743767989363/"></amp-facebook>`,
+		},
 	}
 
 	for _, test := range tests {
