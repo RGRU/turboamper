@@ -88,6 +88,15 @@ func TestVkToAMPWrong(t *testing.T) {
 	}
 }
 
+func ExampleFbToAMP() {
+	html := `<iframe src="https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2Fstcnk%2Fposts%2F3384458724928901&width=500" width="500" height="498" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowTransparency="true" allow="encrypted-media"></iframe>`
+	amp, err := FbToAMP([]byte(html))
+	if err != nil {
+		fmt.Printf("ERROR: %s", err)
+	}
+	fmt.Printf("AMPfied: %s", amp)
+}
+
 func ExampleVkToAMP() {
 	html := `<div id="vk_post_-165546713_21078"></div>
 <script type="text/javascript" src="https://vk.com/js/api/openapi.js?162"></script>
