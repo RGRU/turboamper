@@ -6,4 +6,5 @@ It is planned to support Facebook, Vkontakte, Twitter, Instagram, Youtube and so
 ## Download and install
 
 As usual, ```go get github.com/barsuk/turboamper```
+
 Turboamper supports modules since it was written with go-1.13.
