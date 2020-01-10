@@ -5,6 +5,49 @@ import (
 	"testing"
 )
 
+func TestYoutubeToAMP(t *testing.T) {
+	var tests = []struct {
+		input string
+		want  string
+	}{
+		{
+			`<iframe width="560" height="315" src="https://www.youtube.com/embed/05klG-PTKqo" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
+			`<amp-youtube layout="responsive" width="560" height="315" data-videoid="05klG-PTKqo"></amp-youtube>`,
+		},
+		{
+			`<iframe src="https://www.youtube.com/embed/TVakXOkE2G4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
+			`<amp-youtube layout="responsive" data-videoid="TVakXOkE2G4"></amp-youtube>`,
+		},
+		{
+			`<iframe height="315" src="https://www.youtube.com/embed/TVakXOkE2G4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
+			`<amp-youtube layout="responsive" height="315" data-videoid="TVakXOkE2G4"></amp-youtube>`,
+		},
+		{
+			`<iframe width="560" height="315" src="https://www.youtube.com/embed/TVakXOkE2G4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
+			`<amp-youtube layout="responsive" width="560" height="315" data-videoid="TVakXOkE2G4"></amp-youtube>`,
+		},
+		{ //error
+			`<iframe width="560" height="315" src="https://www.youtube.com/embed/" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
+			`youtube url is malformed`,
+		},
+	}
+
+	for i, test := range tests {
+		got, err := YoutubeToAMP([]byte(test.input))
+		if err != nil {
+			if fmt.Sprint(err) != test.want {
+				t.Errorf("\n[%d]YoutubeToAMP() = %q,\nwant ERR    %q\n", i+1, err, test.want)
+			}
+			continue
+		}
+
+		if string(got) != test.want {
+			t.Errorf("\nYoutubeToAMP() = %q,\nwant        %q\n", got, test.want)
+			t.Errorf("\nERROR: %q", err)
+		}
+	}
+}
+
 func TestTwitToAMP(t *testing.T) {
 	var tests = []struct {
 		input string
