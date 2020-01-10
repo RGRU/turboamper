@@ -14,6 +14,30 @@ import (
 	"strings"
 )
 
+// tweetPost contents instagram data
+type tweetPost struct {
+	ID     string
+	Width  int64
+	Height int64
+	Src    string
+}
+
+func (tpost *tweetPost) printAMP() []byte {
+	attributes := ""
+	if tpost.Width > 0 {
+		attributes += fmt.Sprintf(` width="%d"`, tpost.Width)
+	}
+	if tpost.Height > 0 {
+		attributes += fmt.Sprintf(` height="%d"`, tpost.Height)
+	}
+	//template := `<amp-instagram layout="responsive"%s data-shortcode="%s"></amp-instagram>`
+	template := `<amp-twitter layout="responsive"%s data-tweetid="%s"></amp-twitter>`
+
+	amp := fmt.Sprintf(template, attributes, tpost.ID)
+
+	return []byte(amp) //
+}
+
 // instaPost contents instagram data
 type instaPost struct {
 	IsCaptioned bool
@@ -263,10 +287,41 @@ func InstaToAMP(htmlText []byte) ([]byte, error) {
 	return post.printAMP(), nil
 }
 
-// TwitToAMP convertes given instagram embeddable html to AMP
+// TwitToAMP convertes given twitter embeddable html to AMP
 func TwitToAMP(htmlText []byte) ([]byte, error) {
-	converted := make([]byte, 0, len(htmlText))
-	return converted, nil
+	pointerNode, err := html.Parse(bytes.NewReader(htmlText))
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse twitter html")
+	}
+	var post tweetPost
+
+	var f func(*html.Node)
+	f = func(n *html.Node) {
+		if n.DataAtom == atom.A {
+			for _, a := range n.Attr {
+				if a.Key == "href" {
+					re := regexp.MustCompile(`https://twitter.com/[a-zA-Z_]{1,15}/status/(\d+)`)
+					submatch := re.FindStringSubmatch(a.Val)
+					if submatch == nil {
+						continue
+					}
+					post.ID = submatch[1]
+					post.Src = a.Val
+					return
+				}
+			}
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			f(c)
+		}
+	}
+	f(pointerNode)
+
+	if !(len(post.Src) > 0) {
+		return nil, fmt.Errorf("no twitter ID in the url")
+	}
+
+	return post.printAMP(), nil
 }
 
 // IframeToAMP convertes given instagram embeddable html to AMP
