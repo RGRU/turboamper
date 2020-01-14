@@ -14,10 +14,30 @@ import (
 	"strings"
 )
 
+type iframePost struct {
+	AllowFS     bool
+	Frameborder int64
+	Src         string
+}
+
+// printAMP returns ready to handle AMP with given parameters
+func (ifrPost *iframePost) printAMP() []byte {
+	var attributes string
+	if ifrPost.AllowFS {
+		attributes += ` allowfullscreen`
+	}
+
+	template := `<amp-iframe width="480" height="315" sandbox="allow-scripts allow-same-origin" layout="responsive" frameborder="%d"%s src="%s"`
+
+	amp := fmt.Sprintf(template, ifrPost.Frameborder, attributes, ifrPost.Src)
+
+	return []byte(amp)
+}
+
 type youtubePost struct {
 	Width   int64
 	Height  int64
-	VideoId    string
+	VideoId string
 	Src     string
 }
 
@@ -351,9 +371,6 @@ func TwitToAMP(htmlText []byte) ([]byte, error) {
 
 // YoutubeToAMP convertes given youtube embeddable html to AMP
 func YoutubeToAMP(htmlText []byte) ([]byte, error) {
-	//<iframe width="560" height="315" src="https://www.youtube.com/embed/TVakXOkE2G4" frameborder="0"
-	//  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-	//`<amp-youtube layout="responsive" width="560" height="315" data-videoid="TVakXOkE2G4"></amp-youtube>`,
 	pointerNode, err := html.Parse(bytes.NewReader(htmlText))
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse youtube iframe")
@@ -414,6 +431,50 @@ func YoutubeToAMP(htmlText []byte) ([]byte, error) {
 
 // IframeToAMP convertes given instagram embeddable html to AMP
 func IframeToAMP(htmlText []byte) ([]byte, error) {
-	converted := make([]byte, 0, len(htmlText))
-	return converted, nil
+	pointerNode, err := html.Parse(bytes.NewReader(htmlText))
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse iframe")
+	}
+	var post iframePost
+
+	var f func(*html.Node)
+	f = func(n *html.Node) {
+		if n.DataAtom == atom.Iframe {
+			for _, iframe := range n.Attr {
+				switch iframe.Key {
+				case "src":
+					post.Src = iframe.Val
+				case "allowfullscreen":
+					post.AllowFS = true
+				case "frameborder":
+					fb, err := strconv.ParseInt(iframe.Val, 10, 0)
+					if err == nil {
+						post.Frameborder = fb
+					}
+				}
+			}
+			if len(post.Src) > 0 {
+				return
+			}
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			f(c)
+		}
+	}
+	f(pointerNode)
+
+	if len(post.Src) < 1 {
+		return nil, fmt.Errorf("no src in the url")
+	}
+
+	urlPtr, err := url.Parse(post.Src)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse iframe url")
+	}
+
+	if urlPtr.Scheme != `https` {
+		return nil, fmt.Errorf("amp supports only https iframe scheme")
+	}
+
+	return post.printAMP(), nil
 }
