@@ -5,6 +5,49 @@ import (
 	"testing"
 )
 
+func TestIframeToTurbo(t *testing.T) {
+	var tests = []struct {
+		input string
+		want  string
+	}{
+		{
+			`<div style="position: relative;padding-bottom: 56.25%; padding-top: 25px; height: 0;"><iframe style="position: absolute;top: 0;left: 0;width: 100%;height: 100%;" src="https://russian.rt.com/nopolitics/video/706313-popokatepetl-stolb-pepel-3-km/video/5e1852ef02e8bd3b731db837" frameborder="0" allowfullscreen/></iframe></div>`,
+			`<iframe allowfullscreen="true" frameborder="0" src="https://russian.rt.com/nopolitics/video/706313-popokatepetl-stolb-pepel-3-km/video/5e1852ef02e8bd3b731db837"></iframe>`,
+		},
+		{
+			`<div style="position: relative;padding-bottom: 56.25%; padding-top: 25px; height: 0;"><iframe style="position: absolute;top: 0;left: 0;width: 100%;height: 100%;" src="https://russian.rt.com/world/video/706283-posol-iran-oon-ssha-suleimani/video/5e184bbf02e8bd3f073eebeb" frameborder="0"/></iframe></div>`,
+			`<iframe frameborder="0" src="https://russian.rt.com/world/video/706283-posol-iran-oon-ssha-suleimani/video/5e184bbf02e8bd3f073eebeb"></iframe>`,
+		},
+		{
+			`<div style="position: relative;padding-bottom: 56.25%; padding-top: 25px; height: 0;"><iframe style="position: absolute;top: 0;left: 0;width: 100%;height: 100%;" src="https://russian.rt.com/world/video/706283-posol-iran-oon-ssha-suleimani/video/5e184bbf02e8bd3f073eebeb" frameborder="2"/></iframe></div>`,
+			`<iframe frameborder="2" src="https://russian.rt.com/world/video/706283-posol-iran-oon-ssha-suleimani/video/5e184bbf02e8bd3f073eebeb"></iframe>`,
+		},
+		{
+			`<div style="position: relative;padding-bottom: 56.25%; padding-top: 25px; height: 0;"><iframe style="position: absolute;top: 0;left: 0;width: 100%;height: 100%;" src="https://russian.rt.com/world/video/706283-posol-iran-oon-ssha-suleimani/video/5e184bbf02e8bd3f073eebeb" frameborder="0" allowfullscreen/></iframe></div>`,
+			`<iframe allowfullscreen="true" frameborder="0" src="https://russian.rt.com/world/video/706283-posol-iran-oon-ssha-suleimani/video/5e184bbf02e8bd3f073eebeb"></iframe>`,
+		},
+		{
+			//error
+			`<div style="position: relative;padding-bottom: 56.25%; padding-top: 25px; height: 0;"><iframe style="position: absolute;top: 0;left: 0;width: 100%;height: 100%;" src="" frameborder="0" allowfullscreen/></iframe></div>`,
+			`no src in the url`,
+		},
+	}
+
+	for i, test := range tests {
+		got, err := IframeToTurbo([]byte(test.input))
+		if err != nil {
+			if fmt.Sprint(err) != test.want {
+				t.Errorf("\n[%d]IframeToTurbo() = %q,\nwant ERR    %q\n", i+1, err, test.want)
+			}
+			continue
+		}
+
+		if string(got) != test.want {
+			t.Errorf("\n[%d]IframeToTurbo() = %q,\nwant        %q\n", i+1, got, test.want)
+		}
+	}
+}
+
 func TestYoutubeToTurbo(t *testing.T) {
 	var tests = []struct {
 		input string

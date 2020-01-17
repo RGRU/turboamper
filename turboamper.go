@@ -15,6 +15,8 @@ import (
 )
 
 type iframePost struct {
+	Width       int64
+	Height      int64
 	AllowFS     bool
 	Frameborder int64
 	Src         string
@@ -23,15 +25,21 @@ type iframePost struct {
 // printTurbo returns ready to handle Turbo with given parameters
 func (ifrPost *iframePost) printTurbo() []byte {
 	var attributes string
+	if ifrPost.Width > 0 {
+		attributes += fmt.Sprintf(` width="%d"`, ifrPost.Width)
+	}
+	if ifrPost.Height > 0 {
+		attributes += fmt.Sprintf(` height="%d"`, ifrPost.Height)
+	}
 	if ifrPost.AllowFS {
-		attributes += ` allowfullscreen`
+		attributes += ` allowfullscreen="true"`
 	}
 
-	template := ``
+	template := `<iframe%s frameborder="%d" src="%s"></iframe>`
 
-	amp := fmt.Sprintf(template, ifrPost.Frameborder, attributes, ifrPost.Src)
+	turbo := fmt.Sprintf(template, attributes, ifrPost.Frameborder, ifrPost.Src)
 
-	return []byte(amp)
+	return []byte(turbo)
 }
 
 // printAMP returns ready to handle AMP with given parameters

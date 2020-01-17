@@ -88,6 +88,16 @@ func IframeToTurbo(htmlText []byte) ([]byte, error) {
 				switch iframe.Key {
 				case "src":
 					post.Src = iframe.Val
+				case "width":
+					w, err := strconv.ParseInt(iframe.Val, 10, 0)
+					if err == nil {
+						post.Width = w
+					}
+				case "height":
+					h, err := strconv.ParseInt(iframe.Val, 10, 0)
+					if err == nil {
+						post.Height = h
+					}
 				case "allowfullscreen":
 					post.AllowFS = true
 				case "frameborder":
@@ -117,7 +127,7 @@ func IframeToTurbo(htmlText []byte) ([]byte, error) {
 	}
 
 	if urlPtr.Scheme != `https` {
-		return nil, fmt.Errorf("amp supports only https iframe scheme")
+		return nil, fmt.Errorf("yandex Turbo supports only https iframe scheme")
 	}
 
 	return post.printTurbo(), nil
