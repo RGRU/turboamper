@@ -5,6 +5,44 @@ import (
 	"testing"
 )
 
+func TestYoutubeToTurbo(t *testing.T) {
+	var tests = []struct {
+		input string
+		want  string
+	}{
+		{
+			`<iframe width="560" height="315" src="https://www.youtube.com/embed/05klG-PTKqo" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
+			`<iframe width="560" height="315" allowfullscreen="true" frameborder="0" src="https://www.youtube.com/embed/05klG-PTKqo"></iframe>`,
+		},
+		{
+			`<iframe src="https://www.youtube.com/embed/TVakXOkE2G4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
+			`<iframe allowfullscreen="true" frameborder="0" src="https://www.youtube.com/embed/TVakXOkE2G4"></iframe>`,
+		},
+		{
+			`<iframe height="315" src="https://www.youtube.com/embed/TVakXOkE2G4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
+			`<iframe height="315" allowfullscreen="true" frameborder="0" src="https://www.youtube.com/embed/TVakXOkE2G4"></iframe>`,
+		},
+		{ //error
+			`<iframe width="560" height="315" src="https://www.youtube.com/embed/" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
+			`youtube url is malformed`,
+		},
+	}
+
+	for i, test := range tests {
+		got, err := YoutubeToTurbo([]byte(test.input))
+		if err != nil {
+			if fmt.Sprint(err) != test.want {
+				t.Errorf("\n[%d]YoutubeToTurbo() = %q,\nwant ERR    %q\n", i+1, err, test.want)
+			}
+			continue
+		}
+
+		if string(got) != test.want {
+			t.Errorf("\n[%d]YoutubeToTurbo() = %q,\nwant        %q\n", i+1, got, test.want)
+		}
+	}
+}
+
 func TestIframeToAMP(t *testing.T) {
 	var tests = []struct {
 		input string

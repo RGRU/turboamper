@@ -20,6 +20,20 @@ type iframePost struct {
 	Src         string
 }
 
+// printTurbo returns ready to handle Turbo with given parameters
+func (ifrPost *iframePost) printTurbo() []byte {
+	var attributes string
+	if ifrPost.AllowFS {
+		attributes += ` allowfullscreen`
+	}
+
+	template := ``
+
+	amp := fmt.Sprintf(template, ifrPost.Frameborder, attributes, ifrPost.Src)
+
+	return []byte(amp)
+}
+
 // printAMP returns ready to handle AMP with given parameters
 func (ifrPost *iframePost) printAMP() []byte {
 	var attributes string
@@ -35,10 +49,32 @@ func (ifrPost *iframePost) printAMP() []byte {
 }
 
 type youtubePost struct {
-	Width   int64
-	Height  int64
-	VideoId string
-	Src     string
+	AllowFS     bool
+	Frameborder int64
+	Width       int64
+	Height      int64
+	VideoId     string
+	Src         string
+}
+
+// printTurbo returns ready to handle Turbo with given parameters
+func (ypost *youtubePost) printTurbo() []byte {
+	var attributes string
+	if ypost.Width > 0 {
+		attributes += fmt.Sprintf(` width="%d"`, ypost.Width)
+	}
+	if ypost.Height > 0 {
+		attributes += fmt.Sprintf(` height="%d"`, ypost.Height)
+	}
+	if ypost.AllowFS {
+		attributes += ` allowfullscreen="true"`
+	}
+
+	template := `<iframe%s frameborder="%d" src="https://www.youtube.com/embed/%s"></iframe>`
+
+	amp := fmt.Sprintf(template, attributes, ypost.Frameborder, ypost.VideoId)
+
+	return []byte(amp)
 }
 
 // printAMP returns ready to handle AMP with given parameters
@@ -429,7 +465,8 @@ func YoutubeToAMP(htmlText []byte) ([]byte, error) {
 	return post.printAMP(), nil
 }
 
-// IframeToAMP convertes given instagram embeddable html to AMP
+// IframeToAMP convertes some custom iframe embeddable html to AMP
+// Tested on Russia Today
 func IframeToAMP(htmlText []byte) ([]byte, error) {
 	pointerNode, err := html.Parse(bytes.NewReader(htmlText))
 	if err != nil {
