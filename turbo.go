@@ -11,6 +11,59 @@ import (
 	"strings"
 )
 
+// FbToTurbo validates Facebook html for Yandex Turbo
+func FbToTurbo(htmlText []byte) ([]byte, error) {
+	pointerNode, err := html.Parse(bytes.NewReader(htmlText))
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse fb iframe")
+	}
+	var post fbPost
+
+	var f func(*html.Node)
+	f = func(n *html.Node) {
+		if n.DataAtom == atom.Iframe {
+			for _, iframe := range n.Attr {
+				switch iframe.Key {
+				case "src":
+					post.Src = iframe.Val
+				case "width":
+					w, err := strconv.ParseInt(iframe.Val, 10, 0)
+					if err == nil {
+						post.Width = w
+					}
+				case "height":
+					h, err := strconv.ParseInt(iframe.Val, 10, 0)
+					if err == nil {
+						post.Height = h
+					}
+				}
+			}
+			if len(post.Src) > 0 {
+				return
+			}
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			f(c)
+		}
+	}
+	f(pointerNode)
+
+	if len(post.Src) < 1 {
+		return nil, fmt.Errorf("no src in the url")
+	}
+
+	urlPtr, err := url.Parse(post.Src)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse fb url")
+	}
+
+	if !strings.Contains(urlPtr.Hostname(), "facebook.com") {
+		return nil, fmt.Errorf("it is not facebook url")
+	}
+
+	return htmlText, nil
+}
+
 // YoutubeToTurbo convertes Youtube embeddable html to Yandex Turbo
 func YoutubeToTurbo(htmlText []byte) ([]byte, error) {
 	pointerNode, err := html.Parse(bytes.NewReader(htmlText))

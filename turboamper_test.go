@@ -5,6 +5,45 @@ import (
 	"testing"
 )
 
+func TestFbToTurbo(t *testing.T) {
+	var tests = []struct {
+		input string
+		want  string
+	}{
+		{
+			`<iframe src="https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2Fstcnk%2Fposts%2F3384458724928901&width=500" width="500" height="498" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowTransparency="true" allow="encrypted-media"></iframe>`,
+			`<iframe src="https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2Fstcnk%2Fposts%2F3384458724928901&width=500" width="500" height="498" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowTransparency="true" allow="encrypted-media"></iframe>`,
+		},
+		{
+			`<iframe src="https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Fnasaearth%2Fvideos%2F456540998570328%2F&show_text=0&width=560" width="560" height="373" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowTransparency="true" allowFullScreen="true"></iframe>`,
+			`<iframe src="https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Fnasaearth%2Fvideos%2F456540998570328%2F&show_text=0&width=560" width="560" height="373" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowTransparency="true" allowFullScreen="true"></iframe>`,
+		},
+		{
+			`<iframe src="https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Fbarsuksergey%2Fvideos%2F2720743767989363%2F&show_text=0&width=560" width="560" height="308" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowTransparency="true" allowFullScreen="true"></iframe>`,
+			`<iframe src="https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Fbarsuksergey%2Fvideos%2F2720743767989363%2F&show_text=0&width=560" width="560" height="308" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowTransparency="true" allowFullScreen="true"></iframe>`,
+		},
+		{
+				//error
+			`<iframe src="" width="560" height="308" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowTransparency="true" allowFullScreen="true"></iframe>`,
+			`no src in the url`,
+		},
+	}
+
+	for i, test := range tests {
+		got, err := FbToTurbo([]byte(test.input))
+		if err != nil {
+			if fmt.Sprint(err) != test.want {
+				t.Errorf("\n[%d]IframeToTurbo() = %q,\nwant ERR    %q\n", i+1, err, test.want)
+			}
+			continue
+		}
+
+		if string(got) != test.want {
+			t.Errorf("\n[%d]IframeToTurbo() = %q,\nwant        %q\n", i+1, got, test.want)
+		}
+	}
+}
+
 func TestIframeToTurbo(t *testing.T) {
 	var tests = []struct {
 		input string
