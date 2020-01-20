@@ -11,6 +11,133 @@ import (
 	"strings"
 )
 
+// VkToTurbo validates given vkontakte widget post for Yandex Turbo
+// What is that? Look https://vk.com/dev/widget_post
+func VkToTurbo(htmlText []byte) ([]byte, error) {
+	if !bytes.Contains(htmlText, []byte(`VK.Widgets.Post`)) {
+		return nil, fmt.Errorf("given string is not a VK widget post")
+	}
+
+	re := regexp.MustCompile(`VK.Widgets.Post\("vk_post_(-?\d+)_(-?\d+)", (-?\d+), (-?\d+), '(\S+?)'`)
+	widgetParsed := re.FindSubmatch(htmlText)
+	if widgetParsed == nil {
+		return nil, fmt.Errorf("cannot parse vk widget")
+	}
+
+	// 1st and 3rd, 2nd and 4th should match
+	if string(widgetParsed[1]) != string(widgetParsed[3]) || string(widgetParsed[2]) != string(widgetParsed[4]) {
+		return nil, fmt.Errorf("parsed string does not match Vk widget post format")
+	}
+
+	_, err := strconv.ParseInt(string(widgetParsed[1]), 10, 0)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse owner id")
+	}
+
+	_, err = strconv.ParseInt(string(widgetParsed[2]), 10, 0)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse post id")
+	}
+
+	return htmlText, nil
+}
+
+// TwitToTurbo convertes given twitter embeddable html for Yandex Turbo
+func TwitToTurbo(htmlText []byte) ([]byte, error) {
+	pointerNode, err := html.Parse(bytes.NewReader(htmlText))
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse twitter html")
+	}
+	var post tweetPost
+
+	var f func(*html.Node)
+	f = func(n *html.Node) {
+		if n.DataAtom == atom.A {
+			for _, a := range n.Attr {
+				if a.Key == "href" {
+					re := regexp.MustCompile(`https://twitter.com/[a-zA-Z_]{1,15}/status/(\d+)`)
+					submatch := re.FindStringSubmatch(a.Val)
+					if submatch == nil {
+						continue
+					}
+					post.ID = submatch[1]
+					post.Src = a.Val
+					return
+				}
+			}
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			f(c)
+		}
+	}
+	f(pointerNode)
+
+	if len(post.Src) < 1 {
+		return nil, fmt.Errorf("no twitter ID in the url")
+	}
+
+	return htmlText, nil
+}
+
+// InstaToTurbo validates given instagram embeddable html for Yandex Turbo
+func InstaToTurbo(htmlText []byte) ([]byte, error) {
+	pointerNode, err := html.Parse(bytes.NewReader(htmlText))
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse insta html")
+	}
+	var post instaPost
+
+	var f func(*html.Node)
+	f = func(n *html.Node) {
+		if n.DataAtom == atom.Blockquote {
+			for _, bq := range n.Attr {
+				switch bq.Key {
+				case "data-instgrm-permalink":
+					post.Src = bq.Val
+				case "width":
+					w, err := strconv.ParseInt(bq.Val, 10, 0)
+					if err == nil {
+						post.Width = w
+					}
+				case "height":
+					h, err := strconv.ParseInt(bq.Val, 10, 0)
+					if err == nil {
+						post.Height = h
+					}
+				}
+			}
+			if len(post.Src) > 0 {
+				return
+			}
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			f(c)
+		}
+	}
+	f(pointerNode)
+
+	if len(post.Src) < 1 {
+		return nil, fmt.Errorf("no src in the url")
+	}
+
+	urlPtr, err := url.Parse(post.Src)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse url")
+	}
+
+	if !strings.Contains(urlPtr.Hostname(), "instagram.com") {
+		return nil, fmt.Errorf("it is not instagram url")
+	}
+
+	re := regexp.MustCompile(`p/(\S+?)/`)
+	submatch := re.FindStringSubmatch(urlPtr.Path)
+	if submatch == nil {
+		return nil, fmt.Errorf("instagram url is malformed")
+	}
+
+	return htmlText, nil
+}
+
 // FbToTurbo validates Facebook html for Yandex Turbo
 func FbToTurbo(htmlText []byte) ([]byte, error) {
 	pointerNode, err := html.Parse(bytes.NewReader(htmlText))
