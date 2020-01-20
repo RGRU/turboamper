@@ -14,6 +14,37 @@ import (
 	"strings"
 )
 
+// AMP gives you amp-representation of html and its type
+// If it cannot recognize your html, it returns simple error.
+func AMP(htmlText []byte) ([]byte, string, error) {
+	got, err := VkToAMP(htmlText)
+	if err == nil {
+		return got, `vkontakte`, nil
+	}
+	got, err = FbToAMP(htmlText)
+	if err == nil {
+		return got, `facebook`, nil
+	}
+	got, err = InstaToAMP(htmlText)
+	if err == nil {
+		return got, `instagram`, nil
+	}
+	got, err = TwitToAMP(htmlText)
+	if err == nil {
+		return got, `twitter`, nil
+	}
+	got, err = YoutubeToAMP(htmlText)
+	if err == nil {
+		return got, `youtube`, nil
+	}
+	got, err = IframeToAMP(htmlText)
+	if err == nil {
+		return got, `iframe`, nil
+	}
+
+	return nil, ``, fmt.Errorf("unknown embed")
+}
+
 type iframePost struct {
 	Width       int64
 	Height      int64

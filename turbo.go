@@ -11,6 +11,37 @@ import (
 	"strings"
 )
 
+// Turbo gives you YandexTurbo-representation of html and its type
+// If it cannot recognize your html, it returns simple error.
+func Turbo(htmlText []byte) ([]byte, string, error) {
+	got, err := VkToTurbo(htmlText)
+	if err == nil {
+		return got, `vkontakte`, nil
+	}
+	got, err = FbToTurbo(htmlText)
+	if err == nil {
+		return got, `facebook`, nil
+	}
+	got, err = InstaToTurbo(htmlText)
+	if err == nil {
+		return got, `instagram`, nil
+	}
+	got, err = TwitToTurbo(htmlText)
+	if err == nil {
+		return got, `twitter`, nil
+	}
+	got, err = YoutubeToTurbo(htmlText)
+	if err == nil {
+		return got, `youtube`, nil
+	}
+	got, err = IframeToTurbo(htmlText)
+	if err == nil {
+		return got, `iframe`, nil
+	}
+
+	return nil, ``, fmt.Errorf("unknown embed")
+}
+
 // VkToTurbo validates given vkontakte widget post for Yandex Turbo
 // What is that? Look https://vk.com/dev/widget_post
 func VkToTurbo(htmlText []byte) ([]byte, error) {
