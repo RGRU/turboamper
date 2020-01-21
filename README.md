@@ -7,4 +7,6 @@ It is planned to support Facebook, Vkontakte, Twitter, Instagram, Youtube and so
 
 As usual, ```go get github.com/barsuk/turboamper```
 
-Turboamper supports modules since it was written with go-1.13.
+Turboamper supports modules since it was written with go-1.13, so you can add the package to your go.mod file:
+
+```require github.com/barsuk/turboamper version```
