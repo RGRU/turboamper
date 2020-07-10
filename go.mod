@@ -1,5 +1,5 @@
-module github.com/barsuk/turboamper
+module github.com/RGRU/turboamper
 
-go 1.13
+go 1.14
 
-require golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553
+require golang.org/x/net v0.0.0-20200707034311-ab3426394381
