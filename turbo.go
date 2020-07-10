@@ -3,12 +3,13 @@ package turboamper
 import (
 	"bytes"
 	"fmt"
-	"golang.org/x/net/html"
-	"golang.org/x/net/html/atom"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"golang.org/x/net/html"
+	"golang.org/x/net/html/atom"
 )
 
 // Turbo gives you YandexTurbo-representation of html and its type
@@ -40,6 +41,46 @@ func Turbo(htmlText []byte) ([]byte, string, error) {
 	}
 
 	return nil, ``, fmt.Errorf("unknown embed")
+}
+
+// printTurbo returns ready to handle Turbo with given parameters
+func (ifrPost *iframePost) printTurbo() []byte {
+	var attributes string
+	if ifrPost.Width > 0 {
+		attributes += fmt.Sprintf(` width="%d"`, ifrPost.Width)
+	}
+	if ifrPost.Height > 0 {
+		attributes += fmt.Sprintf(` height="%d"`, ifrPost.Height)
+	}
+	if ifrPost.AllowFS {
+		attributes += ` allowfullscreen="true"`
+	}
+
+	template := `<iframe%s frameborder="%d" src="%s"></iframe>`
+
+	turbo := fmt.Sprintf(template, attributes, ifrPost.Frameborder, ifrPost.Src)
+
+	return []byte(turbo)
+}
+
+// printTurbo returns ready to handle Turbo with given parameters
+func (ypost *youtubePost) printTurbo() []byte {
+	var attributes string
+	if ypost.Width > 0 {
+		attributes += fmt.Sprintf(` width="%d"`, ypost.Width)
+	}
+	if ypost.Height > 0 {
+		attributes += fmt.Sprintf(` height="%d"`, ypost.Height)
+	}
+	if ypost.AllowFS {
+		attributes += ` allowfullscreen="true"`
+	}
+
+	template := `<iframe%s frameborder="%d" src="https://www.youtube.com/embed/%s"></iframe>`
+
+	amp := fmt.Sprintf(template, attributes, ypost.Frameborder, ypost.VideoID)
+
+	return []byte(amp)
 }
 
 // VkToTurbo validates given vkontakte widget post for Yandex Turbo
@@ -279,7 +320,7 @@ func YoutubeToTurbo(htmlText []byte) ([]byte, error) {
 	if submatch == nil {
 		return nil, fmt.Errorf("youtube url is malformed")
 	}
-	post.VideoId = submatch[1]
+	post.VideoID = submatch[1]
 
 	return post.printTurbo(), nil
 }

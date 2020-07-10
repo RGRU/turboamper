@@ -6,12 +6,13 @@ package turboamper
 import (
 	"bytes"
 	"fmt"
-	"golang.org/x/net/html"
-	"golang.org/x/net/html/atom"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"golang.org/x/net/html"
+	"golang.org/x/net/html/atom"
 )
 
 // AMP gives you amp-representation of html and its type
@@ -41,6 +42,10 @@ func AMP(htmlText []byte) ([]byte, string, error) {
 	if err == nil {
 		return got, `iframe`, nil
 	}
+	got, err = PlaybuzzToAMP(htmlText)
+	if err == nil {
+		return got, `playbuzz`, nil
+	}
 
 	return nil, ``, fmt.Errorf("unknown embed")
 }
@@ -51,26 +56,6 @@ type iframePost struct {
 	AllowFS     bool
 	Frameborder int64
 	Src         string
-}
-
-// printTurbo returns ready to handle Turbo with given parameters
-func (ifrPost *iframePost) printTurbo() []byte {
-	var attributes string
-	if ifrPost.Width > 0 {
-		attributes += fmt.Sprintf(` width="%d"`, ifrPost.Width)
-	}
-	if ifrPost.Height > 0 {
-		attributes += fmt.Sprintf(` height="%d"`, ifrPost.Height)
-	}
-	if ifrPost.AllowFS {
-		attributes += ` allowfullscreen="true"`
-	}
-
-	template := `<iframe%s frameborder="%d" src="%s"></iframe>`
-
-	turbo := fmt.Sprintf(template, attributes, ifrPost.Frameborder, ifrPost.Src)
-
-	return []byte(turbo)
 }
 
 // printAMP returns ready to handle AMP with given parameters
@@ -92,28 +77,8 @@ type youtubePost struct {
 	Frameborder int64
 	Width       int64
 	Height      int64
-	VideoId     string
+	VideoID     string
 	Src         string
-}
-
-// printTurbo returns ready to handle Turbo with given parameters
-func (ypost *youtubePost) printTurbo() []byte {
-	var attributes string
-	if ypost.Width > 0 {
-		attributes += fmt.Sprintf(` width="%d"`, ypost.Width)
-	}
-	if ypost.Height > 0 {
-		attributes += fmt.Sprintf(` height="%d"`, ypost.Height)
-	}
-	if ypost.AllowFS {
-		attributes += ` allowfullscreen="true"`
-	}
-
-	template := `<iframe%s frameborder="%d" src="https://www.youtube.com/embed/%s"></iframe>`
-
-	amp := fmt.Sprintf(template, attributes, ypost.Frameborder, ypost.VideoId)
-
-	return []byte(amp)
 }
 
 // printAMP returns ready to handle AMP with given parameters
@@ -128,7 +93,7 @@ func (ypost *youtubePost) printAMP() []byte {
 
 	template := `<amp-youtube layout="responsive"%s data-videoid="%s"></amp-youtube>`
 
-	amp := fmt.Sprintf(template, attributes, ypost.VideoId)
+	amp := fmt.Sprintf(template, attributes, ypost.VideoID)
 
 	return []byte(amp)
 }
@@ -141,20 +106,19 @@ type tweetPost struct {
 	Src    string
 }
 
-func (tpost *tweetPost) printAMP() []byte {
-	attributes := ""
-	if tpost.Width > 0 {
-		attributes += fmt.Sprintf(` width="%d"`, tpost.Width)
+func (post *tweetPost) printAMP() []byte {
+	if post.Width == 0 {
+		post.Width = 380
 	}
-	if tpost.Height > 0 {
-		attributes += fmt.Sprintf(` height="%d"`, tpost.Height)
+	if post.Height == 0 {
+		post.Height = 480
 	}
 	//template := `<amp-instagram layout="responsive"%s data-shortcode="%s"></amp-instagram>`
-	template := `<amp-twitter layout="responsive"%s data-tweetid="%s"></amp-twitter>`
+	template := `<amp-twitter layout="responsive" height="%d" width="%d" data-tweetid="%s"></amp-twitter>`
 
-	amp := fmt.Sprintf(template, attributes, tpost.ID)
+	amp := fmt.Sprintf(template, post.Height, post.Width, post.ID)
 
-	return []byte(amp) //
+	return []byte(amp)
 }
 
 // instaPost contents instagram data
@@ -166,45 +130,62 @@ type instaPost struct {
 	Src         string
 }
 
-func (ipost *instaPost) printAMP() []byte {
+func (post *instaPost) printAMP() []byte {
 	attributes := ""
-	if ipost.Width > 0 {
-		attributes += fmt.Sprintf(` width="%d"`, ipost.Width)
+	if post.Width == 0 {
+		post.Width = 400
 	}
-	if ipost.Height > 0 {
-		attributes += fmt.Sprintf(` height="%d"`, ipost.Height)
+	if post.Height == 0 {
+		post.Height = 400
 	}
-	if ipost.IsCaptioned {
+	if post.IsCaptioned {
 		attributes += ` data-captioned`
 	}
-	template := `<amp-instagram layout="responsive"%s data-shortcode="%s"></amp-instagram>`
+	template := `<amp-instagram layout="responsive" height="%d" width="%d"%s data-shortcode="%s"></amp-instagram>`
 
-	amp := fmt.Sprintf(template, attributes, ipost.Shortcode)
+	amp := fmt.Sprintf(template, post.Height, post.Width, attributes, post.Shortcode)
 
-	return []byte(amp) //
+	return []byte(amp)
+}
+
+// playbuzzPost contents playbuzz data
+type playbuzzPost struct {
+	DataItem string
+	Height   int64
+	Src      string
+}
+
+func (post *playbuzzPost) printAMP() []byte {
+	if post.Height == 0 {
+		post.Height = 500
+	}
+	template := `<amp-playbuzz layout="responsive" height="%d" data-item="%s"></amp-playbuzz>`
+
+	amp := fmt.Sprintf(template, post.Height, post.DataItem)
+
+	return []byte(amp)
 }
 
 // vkPost contents widget data
 type vkPost struct {
-	OwnerId int64
-	PostId  int64
+	OwnerID int64
+	PostID  int64
 	Hash    string
 	Width   int64
 	Height  int64
 }
 
 // printAMP returns ready to handle AMP with given parameters
-func (vkpost *vkPost) printAMP() []byte {
-	attributes := ""
-	if vkpost.Width > 0 {
-		attributes += fmt.Sprintf(` width="%d"`, vkpost.Width)
+func (post *vkPost) printAMP() []byte {
+	if post.Width == 0 {
+		post.Width = 500
 	}
-	if vkpost.Height > 0 {
-		attributes += fmt.Sprintf(` height="%d"`, vkpost.Height)
+	if post.Height == 0 {
+		post.Height = 300
 	}
-	template := `<amp-vk%s data-embedtype="post" layout="responsive" data-owner-id="%d" data-post-id="%d" data-hash="%s"></amp-vk>`
+	template := `<amp-vk height="%d" width="%d" data-embedtype="post" layout="responsive" data-owner-id="%d" data-post-id="%d" data-hash="%s"></amp-vk>`
 
-	amp := fmt.Sprintf(template, attributes, vkpost.OwnerId, vkpost.PostId, vkpost.Hash)
+	amp := fmt.Sprintf(template, post.Height, post.Width, post.OwnerID, post.PostID, post.Hash)
 
 	return []byte(amp)
 }
@@ -218,20 +199,20 @@ type fbPost struct {
 }
 
 // printAMP returns ready to handle AMP with given parameters
-func (fbpost *fbPost) printAMP() []byte {
+func (post *fbPost) printAMP() []byte {
 	var attributes string
-	if fbpost.Width > 0 {
-		attributes += fmt.Sprintf(` width="%d"`, fbpost.Width)
+	if post.Width == 0 {
+		post.Width = 500
 	}
-	if fbpost.Height > 0 {
-		attributes += fmt.Sprintf(` height="%d"`, fbpost.Height)
+	if post.Height == 0 {
+		post.Height = 500
 	}
-	if fbpost.IsVideo {
+	if post.IsVideo {
 		attributes += ` data-embed-as="video"`
 	}
-	template := `<amp-facebook layout="responsive"%s data-href="%s"></amp-facebook>`
+	template := `<amp-facebook height="%d" width="%d" layout="responsive"%s data-href="%s"></amp-facebook>`
 
-	amp := fmt.Sprintf(template, attributes, fbpost.Href)
+	amp := fmt.Sprintf(template, post.Height, post.Width, attributes, post.Href)
 
 	return []byte(amp)
 }
@@ -313,17 +294,17 @@ func VkToAMP(htmlText []byte) ([]byte, error) {
 		return nil, fmt.Errorf("parsed string does not match Vk widget post format")
 	}
 
-	ownerId, err := strconv.ParseInt(string(widgetParsed[1]), 10, 0)
+	ownerID, err := strconv.ParseInt(string(widgetParsed[1]), 10, 0)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse owner id")
 	}
 
-	postId, err := strconv.ParseInt(string(widgetParsed[2]), 10, 0)
+	postID, err := strconv.ParseInt(string(widgetParsed[2]), 10, 0)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse owner id")
 	}
 
-	data := &vkPost{OwnerId: ownerId, PostId: postId, Hash: string(widgetParsed[5])}
+	data := &vkPost{OwnerID: ownerID, PostID: postID, Hash: string(widgetParsed[5])}
 
 	// let's extract width
 	whRe := regexp.MustCompile(`VK.Widgets.Post\(.+?{width: (\d+)(?:, height: (\d+))?}\)`)
@@ -499,7 +480,7 @@ func YoutubeToAMP(htmlText []byte) ([]byte, error) {
 	if submatch == nil {
 		return nil, fmt.Errorf("youtube url is malformed")
 	}
-	post.VideoId = submatch[1]
+	post.VideoID = submatch[1]
 
 	return post.printAMP(), nil
 }
@@ -550,6 +531,19 @@ func IframeToAMP(htmlText []byte) ([]byte, error) {
 
 	if urlPtr.Scheme != `https` {
 		return nil, fmt.Errorf("amp supports only https iframe scheme")
+	}
+
+	return post.printAMP(), nil
+}
+
+// PlaybuzzToAMP convert playbuzz code
+func PlaybuzzToAMP(htmlText []byte) ([]byte, error) {
+	r := regexp.MustCompile(`<div(.+?)(class="playbuzz") data-id="(.+?)"(.+?)<\/div>`)
+	data := r.FindSubmatch(htmlText)
+
+	var post playbuzzPost
+	if len(data) > 3 {
+		post.DataItem = string(data[3])
 	}
 
 	return post.printAMP(), nil
