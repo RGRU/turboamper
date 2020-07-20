@@ -82,18 +82,17 @@ type youtubePost struct {
 }
 
 // printAMP returns ready to handle AMP with given parameters
-func (ypost *youtubePost) printAMP() []byte {
-	var attributes string
-	if ypost.Width > 0 {
-		attributes += fmt.Sprintf(` width="%d"`, ypost.Width)
+func (post *youtubePost) printAMP() []byte {
+	if post.Width == 0 {
+		post.Width = 480
 	}
-	if ypost.Height > 0 {
-		attributes += fmt.Sprintf(` height="%d"`, ypost.Height)
+	if post.Height == 0 {
+		post.Height = 315
 	}
 
-	template := `<amp-youtube layout="responsive"%s data-videoid="%s"></amp-youtube>`
+	template := `<amp-youtube layout="responsive" height="%d" width="%d" data-videoid="%s"></amp-youtube>`
 
-	amp := fmt.Sprintf(template, attributes, ypost.VideoID)
+	amp := fmt.Sprintf(template, post.Height, post.Width, post.VideoID)
 
 	return []byte(amp)
 }
@@ -152,6 +151,7 @@ func (post *instaPost) printAMP() []byte {
 type playbuzzPost struct {
 	DataItem string
 	Height   int64
+	Width    int64
 	Src      string
 }
 
@@ -159,9 +159,12 @@ func (post *playbuzzPost) printAMP() []byte {
 	if post.Height == 0 {
 		post.Height = 500
 	}
-	template := `<amp-playbuzz layout="responsive" height="%d" data-item="%s"></amp-playbuzz>`
+	if post.Width == 0 {
+		post.Width = 380
+	}
+	template := `<amp-playbuzz layout="responsive" height="%d" width="%d" data-item="%s"></amp-playbuzz>`
 
-	amp := fmt.Sprintf(template, post.Height, post.DataItem)
+	amp := fmt.Sprintf(template, post.Height, post.Width, post.DataItem)
 
 	return []byte(amp)
 }

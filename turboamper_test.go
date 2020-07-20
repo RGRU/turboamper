@@ -526,19 +526,19 @@ func TestYoutubeToAMP(t *testing.T) {
 	}{
 		{
 			`<iframe width="560" height="315" src="https://www.youtube.com/embed/05klG-PTKqo" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
-			`<amp-youtube layout="responsive" width="560" height="315" data-videoid="05klG-PTKqo"></amp-youtube>`,
+			`<amp-youtube layout="responsive" height="315" width="560" data-videoid="05klG-PTKqo"></amp-youtube>`,
 		},
 		{
 			`<iframe src="https://www.youtube.com/embed/TVakXOkE2G4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
-			`<amp-youtube layout="responsive" data-videoid="TVakXOkE2G4"></amp-youtube>`,
+			`<amp-youtube layout="responsive" height="315" width="480" data-videoid="TVakXOkE2G4"></amp-youtube>`,
 		},
 		{
 			`<iframe height="315" src="https://www.youtube.com/embed/TVakXOkE2G4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
-			`<amp-youtube layout="responsive" height="315" data-videoid="TVakXOkE2G4"></amp-youtube>`,
+			`<amp-youtube layout="responsive" height="315" width="480" data-videoid="TVakXOkE2G4"></amp-youtube>`,
 		},
 		{
 			`<iframe width="560" height="315" src="https://www.youtube.com/embed/TVakXOkE2G4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
-			`<amp-youtube layout="responsive" width="560" height="315" data-videoid="TVakXOkE2G4"></amp-youtube>`,
+			`<amp-youtube layout="responsive" height="315" width="560" data-videoid="TVakXOkE2G4"></amp-youtube>`,
 		},
 		{ //error
 			`<iframe width="560" height="315" src="https://www.youtube.com/embed/" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
@@ -665,7 +665,7 @@ func TestPlaybuzzToAMPTable(t *testing.T) {
 		{
 			`<script>(function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(d.getElementById(id))return;js=d.createElement(s);js.id=id;js.src='https://embed.ex.co/sdk.js';fjs.parentNode.insertBefore(js,fjs);}(document,'script','playbuzz-sdk'));</script>
 			<div class="playbuzz" data-id="001c4920-5312-4d9a-9ecc-5b5dcf753381">&nbsp;</div>`,
-			`<amp-playbuzz layout="responsive" height="500" data-item="001c4920-5312-4d9a-9ecc-5b5dcf753381"></amp-playbuzz>`,
+			`<amp-playbuzz layout="responsive" height="500" width="380" data-item="001c4920-5312-4d9a-9ecc-5b5dcf753381"></amp-playbuzz>`,
 		},
 	}
 
