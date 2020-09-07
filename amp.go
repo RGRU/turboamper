@@ -542,11 +542,14 @@ func IframeToAMP(htmlText []byte) ([]byte, error) {
 // PlaybuzzToAMP convert playbuzz code
 func PlaybuzzToAMP(htmlText []byte) ([]byte, error) {
 	r := regexp.MustCompile(`<div(.+?)(class="playbuzz") data-id="(.+?)"(.+?)<\/div>`)
-	data := r.FindSubmatch(htmlText)
+	widgetParsed := r.FindSubmatch(htmlText)
+	if widgetParsed == nil {
+		return nil, fmt.Errorf("cannot parse playbuzz widget")
+	}
 
 	var post playbuzzPost
-	if len(data) > 3 {
-		post.DataItem = string(data[3])
+	if len(widgetParsed) > 3 {
+		post.DataItem = string(widgetParsed[3])
 	}
 
 	return post.printAMP(), nil
